@@ -6,6 +6,7 @@ import Navbar from './Navbar';
 import DocReader from './DocReader';
 import LoginForm from './LoginForm';
 
+
 export default class App extends Component {
 
   constructor() {
@@ -17,6 +18,11 @@ export default class App extends Component {
 
     this.doLogin = this.doLogin.bind(this);
     this.doLogout = this.doLogout.bind(this);
+    this.updatePosition = this.updatePosition.bind(this);
+  }
+
+  componentDidMount() {
+    let socket = io(`http://localhost:3000`);
   }
 
   doLogin(user) {
@@ -35,9 +41,9 @@ export default class App extends Component {
     cookie.remove('user', { path: '/' });
   }
 
-	componentDidMount() {
-		let socket = io(`http://localhost:3000`);
-	}
+  updatePosition(position) {
+    // Make request to update position
+  }
 
   render() {
     if (!this.state.user) {
@@ -50,7 +56,7 @@ export default class App extends Component {
     	<div>
 	      <Navbar username={this.state.user} doLogout={this.doLogout} />
 		    <div className="container">
-		    	<DocReader />
+		    	<DocReader updatePosition={this.updatePosition} />
 		    </div>
 		   </div>
     );

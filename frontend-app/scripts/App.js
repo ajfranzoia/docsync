@@ -61,9 +61,12 @@ export default class App extends Component {
     }
 
     this.socket.emit('updatePosition', position);
+    console.log(`Updating scroll position to ${position}`);
   }
 
   onPositionUpdated(position) {
+    console.log(`Received new scroll position of ${position}`);
+
     this.setState({
       isUpdatingPosition: true
     }, () => {
@@ -73,8 +76,6 @@ export default class App extends Component {
         isUpdatingPosition: false
       });
     });
-
-
   }
 
   handleLoginSuccess(response) {

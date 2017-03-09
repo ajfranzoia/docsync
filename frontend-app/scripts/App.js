@@ -13,40 +13,65 @@ export default class App extends Component {
     super();
 
     this.state = {
-      user: cookie.load('user')
+      user: null,
+      isLoggedIn: false
     };
 
     this.doLogin = this.doLogin.bind(this);
     this.doLogout = this.doLogout.bind(this);
     this.updatePosition = this.updatePosition.bind(this);
+    this.handleLoginSuccess = this.handleLoginSuccess.bind(this);
   }
 
   componentDidMount() {
     let socket = io(`http://localhost:3000`);
+    this.socket = socket;
+
+    socket.on('loginSuccess', this.handleLoginSuccess);
+
+    let user = cookie.load('user');
+    if (user) {
+      this.doLogin(user);
+    }
   }
 
   doLogin(user) {
-    this.setState({
-      user: user
-    });
+    this.socket.emit('login', user);
 
-    cookie.save('user', user, { path: '/' });
+    this.setState({
+      user
+    });
   }
 
   doLogout() {
     this.setState({
-      user: null
+      user: null,
+      isLoggedIn: false
     });
 
     cookie.remove('user', { path: '/' });
   }
 
   updatePosition(position) {
-    // Make request to update position
+    this.socket.emit('updatePosition', position);
+  }
+
+  onPositionUpdate(position) {
+    document.body.scrollTop = position;
+  }
+
+  handleLoginSuccess(response) {
+    this.setState({
+      isLoggedIn: true
+    });
+
+    cookie.save('user', this.state.user, { path: '/' });
+
+    this.onPositionUpdate(response.position);
   }
 
   render() {
-    if (!this.state.user) {
+    if (!this.state.isLoggedIn) {
       return (
         <LoginForm onSubmit={this.doLogin} />
       );

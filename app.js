@@ -4,6 +4,7 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var io = require('socket.io');
 
 var routes = require('./routes/index');
 
@@ -53,6 +54,20 @@ app.use(function(err, req, res, next) {
     error: {},
     message: err.message
   });
+});
+
+
+// Initialize server
+app.set('port', process.env.PORT || 3000);
+
+var server = app.listen(app.get('port'), function() {
+  console.log('Express server listening on port ' + server.address().port);
+});
+
+var io = io(server);
+
+io.on('connection', function(socket){
+  console.log('A user connected');
 });
 
 

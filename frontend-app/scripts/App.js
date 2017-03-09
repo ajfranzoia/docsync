@@ -1,10 +1,22 @@
 import React, { Component } from 'react';
+import Navbar from './Navbar';
+import DocReader from './DocReader';
+import io from 'socket.io-client';
 
 export default class App extends Component {
+
+	componentDidMount() {
+		let socket = io(`http://localhost:3000`);
+	}
+
   render() {
     return (
-      // Add your component markup and other subcomponent references here.
-      <h1>Hello, World!</h1>
+    	<div>
+	      <Navbar />
+		    <div className="container">
+		    	<DocReader />
+		    </div>
+		   </div>
     );
   }
 }

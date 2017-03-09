@@ -14,13 +14,15 @@ export default class App extends Component {
 
     this.state = {
       user: null,
-      isLoggedIn: false
+      isLoggedIn: false,
+      isUpdatingPosition: false
     };
 
     this.doLogin = this.doLogin.bind(this);
     this.doLogout = this.doLogout.bind(this);
     this.updatePosition = this.updatePosition.bind(this);
     this.handleLoginSuccess = this.handleLoginSuccess.bind(this);
+    this.onPositionUpdated = this.onPositionUpdated.bind(this);
   }
 
   componentDidMount() {
@@ -28,6 +30,7 @@ export default class App extends Component {
     this.socket = socket;
 
     socket.on('loginSuccess', this.handleLoginSuccess);
+    socket.on('positionUpdated', this.onPositionUpdated);
 
     let user = cookie.load('user');
     if (user) {
@@ -53,11 +56,25 @@ export default class App extends Component {
   }
 
   updatePosition(position) {
+    if (this.state.isUpdatingPosition) {
+      return;
+    }
+
     this.socket.emit('updatePosition', position);
   }
 
-  onPositionUpdate(position) {
-    document.body.scrollTop = position;
+  onPositionUpdated(position) {
+    this.setState({
+      isUpdatingPosition: true
+    }, () => {
+      document.body.scrollTop = position;
+
+      this.setState({
+        isUpdatingPosition: false
+      });
+    });
+
+
   }
 
   handleLoginSuccess(response) {
@@ -67,7 +84,7 @@ export default class App extends Component {
 
     cookie.save('user', this.state.user, { path: '/' });
 
-    this.onPositionUpdate(response.position);
+    this.onPositionUpdated(response.position);
   }
 
   render() {

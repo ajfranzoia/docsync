@@ -14,9 +14,13 @@ function init(server) {
     });
 
     socket.on('updatePosition', function(position) {
+      if (position === currentPosition) {
+        return;
+      }
+
       console.log('Position updated to *' + position + '*');
       currentPosition = position;
-      socket.broadcast.emit('positionUpdate', { position: position });
+      socket.broadcast.emit('positionUpdated', position);
     });
 
     socket.on('disconnect', function() {

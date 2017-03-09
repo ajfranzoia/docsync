@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-export default function Navbar() {
+export default function Navbar(props) {
 	return (
     <nav className="navbar navbar-inverse navbar-fixed-top">
       <div className="container">
@@ -14,9 +14,11 @@ export default function Navbar() {
           <a className="navbar-brand" href="#">DocSync</a>
         </div>
         <div id="navbar" className="collapse navbar-collapse">
-          <ul className="nav navbar-nav">
-            <li className="active"><a href="#">Home</a></li>
-          </ul>
+
+          <p className="navbar-text">Welcome back <strong>{props.username}</strong>!</p>
+          <div className="nav navbar-nav navbar-right">
+            <button type="button" className="btn btn-warning btn-sm navbar-btn" onClick={props.doLogout}>Logout</button>
+          </div>
         </div>
       </div>
     </nav>

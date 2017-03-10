@@ -16,7 +16,9 @@ export default class DocReader extends Component {
   }
 
 	componentDidMount() {
-    window.addEventListener('scroll', debounce(this.handleScroll, config.readingDebounceDelay));
+    window.addEventListener('scroll', debounce(this.handleScroll, config.readingDebounceDelay, () => {
+      return !this.props.isUpdatingPosition;
+    }));
 	}
 
   componentWillUnmount() {

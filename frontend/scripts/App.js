@@ -17,7 +17,7 @@ export default class App extends Component {
       user: null,
       isLoggedIn: false,
       isUpdatingPosition: false,
-      users: null
+      users: []
     };
 
     this.doLogin = this.doLogin.bind(this);
@@ -106,9 +106,13 @@ export default class App extends Component {
     }, () => {
       document.body.scrollTop = position;
 
-      this.setState({
-        isUpdatingPosition: false
-      });
+      // Setup timeout to wait for browser to update scroll position
+      // without triggering a new position update event
+      setTimeout(() => {
+        this.setState({
+          isUpdatingPosition: false
+        });
+      }, 100);
     });
   }
 
@@ -172,7 +176,7 @@ export default class App extends Component {
     	<div>
 	      <Navbar username={this.state.user} users={this.state.users} doLogout={this.doLogout} />
 		    <div className="container">
-		    	<DocReader updatePosition={this.updatePosition} />
+		    	<DocReader updatePosition={this.updatePosition} isUpdatingPosition={this.state.isUpdatingPosition} />
 		    </div>
 		   </div>
     );

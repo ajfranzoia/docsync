@@ -25,7 +25,7 @@ export default class DocReader extends Component {
   }
 
   handleScroll(event) {
-    let position = event.srcElement.body.scrollTop;
+    let position = document.body.scrollTop;
 
     this.setState({
       scrollPosition: position

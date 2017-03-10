@@ -17,6 +17,33 @@ export default function Navbar(props) {
         <div id="navbar" className="collapse navbar-collapse">
 
           <p className="navbar-text">Welcome back <strong>{props.username}</strong>!</p>
+
+          <ul className="nav navbar-nav">
+            <li className="dropdown">
+              <a href="#" className="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                {props.users.length} other users connected
+                <span className="caret"></span>
+              </a>
+
+              { props.users.length ?
+                  (
+                    <ul className="dropdown-menu">
+                      {(
+                        props.users.map(function(user) {
+                          return (
+                            <li key={user}>
+                              <a>{user}</a>
+                            </li>
+                          );
+                        })
+                      )}
+                    </ul>
+                  ) : null
+              }
+
+            </li>
+          </ul>
+
           <div className="nav navbar-nav navbar-right">
             <button type="button" className="btn btn-warning btn-sm navbar-btn" onClick={props.doLogout}>Logout</button>
           </div>

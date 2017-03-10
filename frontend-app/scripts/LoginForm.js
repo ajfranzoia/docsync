@@ -39,7 +39,7 @@ export default class LoginForm extends Component {
             <div className="col-xs-4 col-xs-offset-4">
               <form onSubmit={this.handleSubmit}>
                 <h3>Sign In</h3>
-                <input type="text" className="form-control" onChange={this.handleUsernameChange} placeholder="Username" required />
+                <input type="text" className="form-control" onChange={this.handleUsernameChange} placeholder="Username" required autoFocus />
                 <button className="btn btn-primary btn-block" type="submit">Login</button>
               </form>
             </div>

@@ -3,6 +3,9 @@ body {
 	overflow-y: scroll;
 }
 
+#login-form {
+	text-align: center;
+}
 
 #login-form input {
 	margin: 15px 0;
@@ -11,4 +14,11 @@ body {
 #challenge-text {
 	font-size: 1.3rem;
 	margin-right: 30px;
+}
+
+#loading-app {
+	margin-top: 100px;
+	font-size: 2.5rem;
+	text-align: center;
+	color: #777;
 }

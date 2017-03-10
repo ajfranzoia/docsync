@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import Navbar from './Navbar';
 import DocReader from './DocReader';
 import LoginForm from './LoginForm';
-
+import LoadingApp from './LoadingApp';
 
 export default class App extends Component {
 
@@ -40,6 +40,12 @@ export default class App extends Component {
     if (user) {
       this.doLogin(user);
     }
+
+    // Postpone app initialization flag is a user cookie was found
+    // to prevent login form from appearing
+    this.setState({
+      isInitialized: !user
+    });
   }
 
   /**
@@ -113,6 +119,7 @@ export default class App extends Component {
     console.log(`User ${this.state.user} successfully logged in (other ${response.users.length} users connected)`);
 
     this.setState({
+      isInitialized: true,
       isLoggedIn: true,
       users: response.users
     });
@@ -147,6 +154,12 @@ export default class App extends Component {
   }
 
   render() {
+    if (!this.state.isInitialized) {
+      return (
+        <LoadingApp />
+      );
+    }
+
     if (!this.state.isLoggedIn) {
       return (
         <LoginForm onSubmit={this.doLogin} />

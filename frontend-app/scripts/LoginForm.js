@@ -38,6 +38,7 @@ export default class LoginForm extends Component {
           <div className="row">
             <div className="col-xs-4 col-xs-offset-4">
               <form onSubmit={this.handleSubmit}>
+                <h5>DocSync</h5>
                 <h3>Sign In</h3>
                 <input type="text" className="form-control" onChange={this.handleUsernameChange} placeholder="Username" required autoFocus />
                 <button className="btn btn-primary btn-block" type="submit">Login</button>

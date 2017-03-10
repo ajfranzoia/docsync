@@ -54,7 +54,7 @@ function init(server) {
     socket.on('logout', disconnectUser.bind(null, socket));
 
     // Disconnect event from a client
-    socket.on('disconnect', function() {x
+    socket.on('disconnect', function() {
       if (users[socket.id]) {
         disconnectUser(socket);
         return;

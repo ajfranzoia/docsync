@@ -30,6 +30,7 @@ COPY ./common /usr/src/common
 # Navigate to frontend and build app
 WORKDIR /usr/src/frontend
 RUN npm run build && \
+	mkdir -p ../backend/public && \
 	cp -r dist/* ../backend/public && \
 	cp -r static/* ../backend/public
 

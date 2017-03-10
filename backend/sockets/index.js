@@ -1,10 +1,13 @@
 var socketIo = require('socket.io');
+var events = require('../../common/app_events');
+
 
 // Stores last updated scroll position from clients
 var currentPosition = 0;
 
 // Stores connected users
 var users = {};
+
 
 /**
  * Initialize sockets app
@@ -18,16 +21,16 @@ function init(server) {
     console.log('New connection received');
 
     // Login event from a new user session
-    socket.on('login', function(user) {
+    socket.on(events.USER_LOGIN, function(user) {
       // Inform connected client of succesful login, and give current reading position
       // and a list of the names of the connected users
-      socket.emit('loginSuccess', {
+      socket.emit(events.USER_LOGIN_SUCCESS, {
         position: currentPosition,
         users: getUsers()
       });
 
       // Inform other clients of the user connection
-      socket.broadcast.emit('userConnected', user);
+      socket.broadcast.emit(events.USER_CONNECTED, user);
 
       // Add user to the lists of connected users
       users[socket.id] = user;
@@ -36,7 +39,7 @@ function init(server) {
     });
 
     // Update scroll position event from a client
-    socket.on('updatePosition', function(position) {
+    socket.on(events.POSITION_UPDATE, function(position) {
       if (position === currentPosition) {
         return;
       }
@@ -45,13 +48,13 @@ function init(server) {
       currentPosition = position;
 
       // Inform other clients of position update
-      socket.broadcast.emit('positionUpdated', position);
+      socket.broadcast.emit(events.POSITION_UPDATED, position);
 
       console.log('Position updated to *' + position + '* by user *' + users[socket.id] + '*');
     });
 
     // Logout event from an user. Treat as a user disconnection.
-    socket.on('logout', disconnectUser.bind(null, socket));
+    socket.on(events.USER_LOGOUT, disconnectUser.bind(null, socket));
 
     // Disconnect event from a client
     socket.on('disconnect', function() {
@@ -70,7 +73,7 @@ function disconnectUser(socket) {
   var user = users[socket.id];
 
   // Inform other clients of disconnection
-  socket.broadcast.emit('userDisconnected', user);
+  socket.broadcast.emit(events.USER_DISCONNECTED, user);
 
   // Remove user from the lists of connected users
   delete users[socket.id];

@@ -59,7 +59,11 @@ module.exports = {
     publicPath: '/static/'
   },
   resolve: {
-    extensions: ['', '.js']
+    root: path.resolve(__dirname),
+    extensions: ['', '.js'],
+    alias: {
+      common: '../../common'
+    },
   },
   devtool: 'eval-source-map',
   plugins: [

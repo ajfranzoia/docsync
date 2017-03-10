@@ -5,6 +5,7 @@ import Navbar from './Navbar';
 import DocReader from './DocReader';
 import LoginForm from './LoginForm';
 import LoadingApp from './LoadingApp';
+import events from 'common/app_events';
 
 export default class App extends Component {
 
@@ -31,10 +32,10 @@ export default class App extends Component {
     let socket = io(`http://localhost:3000`);
     this.socket = socket;
 
-    socket.on('loginSuccess', this.handleLoginSuccess);
-    socket.on('positionUpdated', this.onPositionUpdated);
-    socket.on('userConnected', this.handleUserConnected);
-    socket.on('userDisconnected', this.handleUserDisconnected);
+    socket.on(events.USER_LOGIN_SUCCESS, this.handleLoginSuccess);
+    socket.on(events.POSITION_UPDATED, this.onPositionUpdated);
+    socket.on(events.USER_CONNECTED, this.handleUserConnected);
+    socket.on(events.USER_DISCONNECTED, this.handleUserDisconnected);
 
     let user = cookie.load('user');
     if (user) {
@@ -52,7 +53,7 @@ export default class App extends Component {
    * Start user login against the server
    */
   doLogin(user) {
-    this.socket.emit('login', user);
+    this.socket.emit(events.USER_LOGIN, user);
 
     this.setState({
       user
@@ -72,7 +73,7 @@ export default class App extends Component {
 
     cookie.remove('user', { path: '/' });
 
-    this.socket.emit('logout', user);
+    this.socket.emit(events.USER_LOGOUT, user);
   }
 
   /**
@@ -81,11 +82,11 @@ export default class App extends Component {
    * @param  {int} position
    */
   updatePosition(position) {
-    if (this.state.isUpdatingPosition) {
+    if (this.state.isUpdatingPosition || !this.state.isLoggedIn) {
       return;
     }
 
-    this.socket.emit('updatePosition', position);
+    this.socket.emit(events.POSITION_UPDATE, position);
 
     console.log(`Sent new scroll position ${position}`);
   }

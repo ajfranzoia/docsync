@@ -1,12 +1,14 @@
 const webpack = require('webpack');
 const WebpackDevServer = require('webpack-dev-server');
-const config = require('./webpack.config');
+const path = require('path');
+const config = require('./webpack.config.dev');
 
 new WebpackDevServer(webpack(config), {
+  contentBase: path.join(__dirname, 'static'),
   publicPath: config.output.publicPath,
   hot: true,
   historyApiFallback: {
-	  index: 'static/index.html'
+	  index: 'index.html'
 	}
 }).listen(5000, 'localhost', (err) => {
   if (err) {

@@ -62,7 +62,8 @@ module.exports = {
     root: path.resolve(__dirname),
     extensions: ['', '.js'],
     alias: {
-      common: '../../common'
+      common: '../../common',
+      app_config: '../app_config',
     },
   },
   devtool: 'eval-source-map',

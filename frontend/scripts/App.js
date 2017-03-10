@@ -6,6 +6,7 @@ import DocReader from './DocReader';
 import LoginForm from './LoginForm';
 import LoadingApp from './LoadingApp';
 import events from 'common/app_events';
+import config from 'app_config';
 
 export default class App extends Component {
 
@@ -29,7 +30,7 @@ export default class App extends Component {
   }
 
   componentDidMount() {
-    let socket = io(`http://localhost:3000`);
+    let socket = io(config.serverUrl);
     this.socket = socket;
 
     socket.on(events.USER_LOGIN_SUCCESS, this.handleLoginSuccess);

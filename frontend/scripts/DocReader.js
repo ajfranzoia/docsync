@@ -1,8 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import debounce from './utils/debounce';
 import DocContent from './DocContent';
-
-const DEBOUNCE_DELAY = 400;
+import config from 'app_config';
 
 export default class DocReader extends Component {
 
@@ -17,7 +16,7 @@ export default class DocReader extends Component {
   }
 
 	componentDidMount() {
-    window.addEventListener('scroll', debounce(this.handleScroll, DEBOUNCE_DELAY));
+    window.addEventListener('scroll', debounce(this.handleScroll, config.readingDebounceDelay));
 	}
 
   componentWillUnmount() {

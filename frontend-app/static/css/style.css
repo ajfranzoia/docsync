@@ -7,3 +7,8 @@ body {
 #login-form input {
 	margin: 15px 0;
 }
+
+#challenge-text {
+	font-size: 1.3rem;
+	margin-right: 30px;
+}

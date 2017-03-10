@@ -46,6 +46,7 @@
 
 const webpack = require('webpack');
 const path = require('path');
+const config = require('./app_config');
 
 module.exports = {
   entry: [
@@ -64,6 +65,7 @@ module.exports = {
     alias: {
       common: '../../common',
       app_config: '../app_config',
+      document: '../static/docs/' + config.documentName + '.html'
     },
   },
   devtool: 'eval-source-map',
@@ -77,6 +79,11 @@ module.exports = {
         test: /\.jsx?$/,
         loaders: ['babel'],
         include: path.join(__dirname, 'scripts')
+      },
+      {
+        test: /\.html?$/,
+        loaders: ['raw'],
+        include: path.join(__dirname, 'static')
       }
     ]
   }

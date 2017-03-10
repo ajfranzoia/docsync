@@ -1,6 +1,7 @@
 {
-  "name": "mural-challenge",
+  "name": "docsync-backend",
   "version": "0.0.1",
+  "description": "Backend of DocSync, a simple collaborative reading webapp [mural.ly challenge]",
   "private": true,
   "main": "app.js",
   "scripts": {

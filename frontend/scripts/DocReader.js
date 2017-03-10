@@ -1,7 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import debounce from './utils/debounce';
 import DocContent from './DocContent';
-import config from 'app_config';
+import appConfig from 'app_config';
 
 export default class DocReader extends Component {
 
@@ -16,7 +16,7 @@ export default class DocReader extends Component {
   }
 
 	componentDidMount() {
-    window.addEventListener('scroll', debounce(this.handleScroll, config.readingDebounceDelay, () => {
+    window.addEventListener('scroll', debounce(this.handleScroll, appConfig.readingDebounceDelay, () => {
       return !this.props.isUpdatingPosition;
     }));
 	}

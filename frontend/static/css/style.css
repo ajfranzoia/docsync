@@ -22,3 +22,10 @@ body {
 	text-align: center;
 	color: #777;
 }
+
+#error {
+	margin-top: 100px;
+	width: 400px;
+	margin: 0 auto;
+	text-align: center;
+}

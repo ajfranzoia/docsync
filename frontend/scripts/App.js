@@ -5,8 +5,11 @@ import Navbar from './Navbar';
 import DocReader from './DocReader';
 import LoginForm from './LoginForm';
 import LoadingApp from './LoadingApp';
-import events from 'common/app_events';
-import config from 'app_config';
+import Error from './Error';
+import appConfig from 'app_config';
+import events from 'common/events';
+import cookieConfig from 'common/cookieConfig';
+import errorCodes from 'common/errorCodes';
 
 export default class App extends Component {
 
@@ -27,18 +30,12 @@ export default class App extends Component {
     this.onPositionUpdated = this.onPositionUpdated.bind(this);
     this.handleUserConnected = this.handleUserConnected.bind(this);
     this.handleUserDisconnected = this.handleUserDisconnected.bind(this);
+    this.handleSocketError = this.handleSocketError.bind(this);
+    this.handleSocketDisconnect = this.handleSocketDisconnect.bind(this);
   }
 
   componentDidMount() {
-    let socket = io(config.serverUrl);
-    this.socket = socket;
-
-    socket.on(events.USER_LOGIN_SUCCESS, this.handleLoginSuccess);
-    socket.on(events.POSITION_UPDATED, this.onPositionUpdated);
-    socket.on(events.USER_CONNECTED, this.handleUserConnected);
-    socket.on(events.USER_DISCONNECTED, this.handleUserDisconnected);
-
-    let user = cookie.load('user');
+    let user = cookie.load(cookieConfig.name);
     if (user) {
       this.doLogin(user);
     }
@@ -54,11 +51,23 @@ export default class App extends Component {
    * Start user login against the server
    */
   doLogin(user) {
-    this.socket.emit(events.USER_LOGIN, user);
+    cookie.save(cookieConfig.name, user, { path: cookieConfig.path });
 
     this.setState({
       user
     });
+
+    let socket = io(appConfig.serverUrl);
+    this.socket = socket;
+
+    socket.on(events.USER_LOGIN_SUCCESS, this.handleLoginSuccess);
+    socket.on(events.POSITION_UPDATED, this.onPositionUpdated);
+    socket.on(events.USER_CONNECTED, this.handleUserConnected);
+    socket.on(events.USER_DISCONNECTED, this.handleUserDisconnected);
+    socket.on('error', this.handleSocketError);
+    socket.on('disconnect', this.handleSocketDisconnect);
+
+    socket.emit(events.USER_LOGIN, user);
   }
 
   /**
@@ -72,9 +81,8 @@ export default class App extends Component {
       isLoggedIn: false
     });
 
-    cookie.remove('user', { path: '/' });
-
     this.socket.emit(events.USER_LOGOUT, user);
+    cookie.remove(cookieConfig.name, { path: cookieConfig.path });
   }
 
   /**
@@ -130,8 +138,6 @@ export default class App extends Component {
       users: response.users
     });
 
-    cookie.save('user', this.state.user, { path: '/' });
-
     this.onPositionUpdated(response.position);
   }
 
@@ -159,7 +165,42 @@ export default class App extends Component {
     });
   }
 
+  /**
+   * Handles socket app errors
+   * @param  {string} errorCode
+   */
+  handleSocketError(errorCode) {
+    if (errorCode === errorCodes.AUTHENTICATION_ERROR) {
+      this.setState({
+        error: 'An authentication error ocurred'
+      });
+      return;
+    }
+
+    this.setState({
+      error: 'An unhandled error ocurred'
+    });
+  }
+
+  /**
+   * Handles socket disconnections from server
+   */
+  handleSocketDisconnect() {
+    this.setState({
+      error: 'Server is gone'
+    });
+  }
+
+  /**
+   * Render app
+   */
   render() {
+    if (this.state.error) {
+      return (
+        <Error error={this.state.error} />
+      );
+    }
+
     if (!this.state.isInitialized) {
       return (
         <LoadingApp />
@@ -178,7 +219,7 @@ export default class App extends Component {
 		    <div className="container">
 		    	<DocReader updatePosition={this.updatePosition} isUpdatingPosition={this.state.isUpdatingPosition} />
 		    </div>
-		   </div>
+		  </div>
     );
   }
 }

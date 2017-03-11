@@ -5,13 +5,13 @@ Tech challenge for [Mural](https://mural.co)
 
 ## Description
 
-DocSync is a very simple real-time web app that allows users to read a document in a synchronized way. This means that any time an user scrolls up or down the document, the rest of the users will have their documents scrolled to that same position as well. The app includes a simple username authentication step, and shows a lists of the current users reading the document.
+DocSync is a very simple real-time web app that allows users to read a document in a synchronized way. This means that any time an user scrolls up or down the document, the rest of the users will have their documents scrolled to that same position as well. The app includes a basic username authentication step and shows a lists of the current users reading the document.
 
-## Basic structure
+## Basic structure and frameworks used
 
-The application has been separated in backend, frontend and common folders. Backend is built with Express.js and Socket.IO. Frontend is built with React and Webpack. Then common dir includes data that is reused by both sides (e.g. events constants).
+The application has been separated in  ```backend```, ```frontend``` and ```common``` folders. The backend is built with Express.js and Socket.IO. The frontend is built with React and Webpack. The ```common``` dir includes data that is reused by both sides (e.g. events constants, user cookie config, etc.).
 
-## Installation and development
+## Installation and setup
 
 ### For development (gulp + webpack)
 
@@ -22,11 +22,12 @@ git clone https://github.com/ajfranzoia/docsync
 # Run backend server in dev mode
 cd backend && gulp develop
 
-# Run frontend app in dev mode
+# Run frontend app in dev mode (usually in another terminal)
 cd frontend && npm start
 ```
 
 ### For production (provided as a Docker image)
+
 ```bash
 # Clone project
 git clone https://github.com/ajfranzoia/docsync
@@ -39,23 +40,20 @@ docker run -p 3000:3000 docsync
 ```
 
 
-## Architecture decisions
+## Architecture and development decisions
 
-I decided to use Express.js for the backend. I initialized the app by using a Yeoman generator that gave me the starting boilerplate in almost no time. The generator is available at https://github.com/petecoop/generator-express and provides a ready-to-use app. Altough I prefer node scripts for tasks-related stuff, the generator came with gulp. Since there were few tasks, I was ok with it. Cleaned up some boilerplate that comes with generator, like routes and templating system.
+I decided to use Express.js for the backend. I initialized the app by using a Yeoman generator that gave me the starting boilerplate in almost no time. The generator is available at https://github.com/petecoop/generator-express and provides a ready-to-use app. Altough I prefer node scripts for tasks-related stuff, the generator came with gulp, but since there were few tasks, it was ok. I cleaned up some additional boilerplate that comes with generator, like routes and views, which I wasn't going to use.
 
 For the realtime functionality, I installed the socket.io dependency, and made a basic list of the events I was going to support:
-- a user logs in
-- users are notified when a user logs in
-- a user scrolls in a document
-- users are notified when a user scrolls in a document
-- a user logs out
-- users are notified when a user logs out
+- a user logs in, and other users are notified
+- a user scrolls in a document, and other users are notified
+- a user logs out, and other users are notified
 
-For the frontend part, I picked up a boostrap starter template from [Bootstrap](https://getbootstrap.com)'s site, and applied styles from the [Readable](https://bootswatch.com/readable/) Bootswatch template.
+For the frontend part, I picked up a bBostrap starter template from [Bootstrap](https://getbootstrap.com)'s site, and applied styles from the [Readable](https://bootswatch.com/readable/) Bootswatch template.
 
-I chose React as the frontend framework, and picked up https://github.com/vasanthk/react-es6-webpack-boilerplate as the starting boilerplate. It came with Webpack (both for dev and production usage) and hot reloading. There was another nice boilerplate available at https://github.com/srn/react-webpack-boilerplate, but it includes SASS and its dependencies. Since I was going to use a few CSS styles, I decided to go for the lighter option.
+I chose React as the frontend framework, and picked up https://github.com/vasanthk/react-es6-webpack-boilerplate as the starting boilerplate. It came with Webpack (both for dev and production usage) and hot reloading. There was another decent boilerplate available at https://github.com/srn/react-webpack-boilerplate, but it includes SASS and its dependencies. Since I was going to use a few CSS styles, I decided to go for the lighter option.
 
-I refactored the basic HTML I had created at first into the initial React components. The initial structure I designed was:
+I refactored the basic HTML I had created at first into the initial React components. The main structure I came up with was:
 
 ```
 App
@@ -66,24 +64,112 @@ App
 --- --- --- DocContent
 ```
 
-With this structure, I created a basic authentication flow (without server integration): when a user logged in, the document view had to be shown; when a user clicked on logout, the login view had to be shown again.
+With this structure, I created a basic authentication flow (without server integration): when a user logged in, the document view had to be shown; when a user clicked on logout, the login view had to be shown again. If the uses refreshed the page, its state should be kept. This was achieved by the use of a cookie that is stored in the browser when the user logs in, and removed when the user decides to log out.
 
-When a user logs in, a cookie is stored in the browser, so the state is kept when user refresh.
-the cookie is removed and user is logged out. At first, I controlled authentication on the backend by checking the id property of a socket, but later changed it to cookie authentication, that is a more flexible approach (e.g. in the future it could allow for a same user to have more than one tab open at a time, if server restarted session was lost, etc.). The cookie name, along with its path, can be configured in ```common/cookieConfig```, which prevents hardcoding and duplication on both sides of the app.
+On the other side, for the backend authentication, I controlled it at first by inspecting the ```id``` property of a socket, but later changed it to a cookie authentication scheme, which results in a more flexible approach (e.g. in the future it could allow a same user to have more than one tab open at a time, if the server restarted the user session would not be lost, etc.). Cookie data may be accesed in the backend by inspecting the ```socket.request.headers``` property. The cookie name, along with its path, can be configured in ```common/cookieConfig```, which prevents hardcoding and duplication on both sides of the app.
+In the backend, I refactored the user identification via cookie as socket.io middlewares that:
+- Inspect the ```socket.request.headers.cookie``` property, and if a cookie header is found, parse it using the ```cookie``` library
+- Throw an authentication error when a the user cookie is not found
+- Assign the current user as a property of the socket object when identified
 
-I added the event handling in the server. For the sake of simplicity and the purpose of this app, the current position is stored on memory.
+```javascript
+// backend/sockets/middleware.js
 
-To prevent a constant updating of the scroll position, while a user is still scrolling, added a debounce to the update function, extracted from from https://remysharp.com/2010/07/21/throttling-function-calls. After trying different delays, decided that 300ms would be an acceptable value for the user experience. Nevertheless, this value can be configured under the property ```readingDebounceDelay``` in ```frontend/app_config```.
+// Cookies parsing
+io.use(function(socket, next) {
+  var cookieHeader = socket.request.headers.cookie;
 
-Something tricky I found while working with the position update flow, is that when  a new position was received from the server (caused by the scroll of another user), updating the ```body.scrollTop``` property triggered another scroll event, potentially causing an endless loop. In order to prevent this I had to:
-- Ignore position changed on the server if the position didn't changed.
-- Add an ```isUpdating``` flag.
-- Modify the debounce function to allow conditional triggering the passed function.
+  if (cookieHeader) {
+    socket.cookies = cookie.parse(cookieHeader);
+  }
 
-As a nice-to-have feature, I decided to show a list of the current logged in users. Added support for the required events in the frontend and backend.
+  next();
+});
 
-I separated backend folders from frontend.
-I also realized that the event names where duplicated in both sides, so I moved them to constants file inside a common folder, where I could reference to from backed or frontend.
+// User identification
+io.use(function(socket, next) {
+  if (!socket.cookies[cookieConfig.name]) {
+    return next(new Error(errorCodes.AUTHENTICATION_ERROR));
+  }
 
-Allow configuration of document by changing config.
+  socket._user = socket.cookies[cookieConfig.name];
+  next();
+});
+```
+
+<br/>
+
+For the scroll position update flow I decided to store the current position in memory for the sake of simplicity and since there would be a single instance of the app. For a more complex solution, it could be stored in a mongodb or redis database. When a user logs in, the current position is received as well.
+
+To prevent a constant updating of the scroll position while a user is still scrolling (since the ```scroll``` event is triggered more than once), I added a debounce on top of to the listener function. This meant: if a user stops scrolling, it will wait a certain amount of time to trigger the update function; if during that time the user scrolls again, that timer is reset. I extracted the debounce code from https://remysharp.com/2010/07/21/throttling-function-calls and later modified it. After trying different delays, decided that 300ms would be an acceptable value for a good user experience. Nevertheless, this value can be configured by editing the property ```readingDebounceDelay``` in ```frontend/app_config```.
+
+Example of usage of the debounce function:
+```javascript
+window.addEventListener('scroll', debounce(this.handleScroll, appConfig.readingDebounceDelay));
+```
+
+Something tricky I found while working with the position update flow, is that when  a new position was received from the server (previously caused by the scroll action of another user), updating the ```body.scrollTop``` property triggered another scroll event, potentially causing an endless loop. In order to prevent this I had to:
+- Ignore the received position on the server if its value doesn't change.
+- Add an ```isUpdatingPosition``` flag on the frontend ```App``` component in order to prevent triggering and update to the server:
+```javascript
+this.setState({
+  isUpdatingPosition: true
+}, () => {
+  document.body.scrollTop = position;
+
+  // Setup timeout to wait for browser to update scroll position
+  // without triggering a new position update event
+  setTimeout(() => {
+    this.setState({
+      isUpdatingPosition: false
+    });
+  }, 100);
+});
+```
+- Modify the debounce function in the ```DocReader``` component to allow conditionally triggering the given function if a position update is not ongoing:
+```javascript
+window.addEventListener('scroll', debounce(this.handleScroll, appConfig.readingDebounceDelay, () => {
+  return !this.props.isUpdatingPosition;
+}));
+```
+
+<br/>
+
+As a nice-to-have feature, I decided to add a list of the current logged in users in the app navbar. I added support for handling the current list of logged in users, both in the backend and frontend, which needs to be updated when either a user logs in or out.
+
+Regarding the app structure, at first I had the ```frontend``` dir included in the ```backend``` dir. I decided to pull the ```frontend``` out in order to have a better separation of concerns (which also permits organize them in independent repositories). I also realized that I was duplicating data on both sides (like event names or the user cookie name), so I moved this kind of data to a root ```common``` folder, from where I could reference and make use in the backend or frontend indistinctly.
+
+The app supports only a single document at a time. Though, a different document can be configured by saving an HTML file in ```frontend/docs``` and referencing it by editing the ```documentName``` config in ```frontend/app_config.json```.
+
+Example:
+```html
+<!-- frontend/docs/new_document.html -->
+<p>I am a new document for DocSync</p>
+```
+
+```javascript
+// frontend/app_config.json
+var config = {
+  // ...
+  documentName: 'new_document'
+};
+// ...
+```
+
+<br/>
+***
+<br/>
+
+
+### Bonus point #1
+
+> How would you keep versioning on the database, if we wanted to store the last read position on each document (i.e. pick we're you've left)?
+
+In order to store the last read position on each document I would make use of any persistent storage system in the backend like MySql or MongoDB (taking into account the nature of the application -either relational or more unstructured- when deciding which one to pick).
+If performance matters, I would setup an in-memory database like Redis or Memcached between the server and the persistent storage, which is faster that a only-persistent solution. The server would then look up the last position first in the in-memory storage, and if not found, consult the persistent storage for it (and consequently updating the in-memory storage with the just read value).
+
+
+### Bonus point #2
+
+> How would you run this same app on multiple servers behind a Load Balancer?
 

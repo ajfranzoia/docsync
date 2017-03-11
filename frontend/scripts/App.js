@@ -5,7 +5,7 @@ import Navbar from './Navbar';
 import DocReader from './DocReader';
 import LoginForm from './LoginForm';
 import LoadingApp from './LoadingApp';
-import Error from './Error';
+import ErrorMessage from './ErrorMessage';
 import appConfig from 'appConfig';
 import events from 'common/events';
 import cookieConfig from 'common/cookieConfig';

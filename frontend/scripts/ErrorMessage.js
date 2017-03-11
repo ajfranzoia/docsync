@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 
-export default function Error(props) {
+export default function ErrorMessage(props) {
   return (
     <div id="error" className="alert alert-danger">
       <h6>ERROR</h6>
@@ -8,3 +8,7 @@ export default function Error(props) {
     </div>
   );
 }
+
+ErrorMessage.propTypes = {
+  error: PropTypes.string.isRequired
+};

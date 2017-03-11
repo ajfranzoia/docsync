@@ -42,14 +42,14 @@ docker run -p 3000:3000 docsync
 
 ## Architecture and development decisions
 
-I decided to use Express.js for the backend. I initialized the app by using a Yeoman generator that gave me the starting boilerplate in almost no time. The generator is available at https://github.com/petecoop/generator-express and provides a ready-to-use app. Altough I prefer node scripts for tasks-related stuff, the generator came with gulp, but since there were few tasks, it was ok. I cleaned up some additional boilerplate that comes with generator, like routes and views, which I wasn't going to use.
+I decided to use Express.js for the backend. I initialized the app by using a Yeoman generator that gave me the starting boilerplate in almost no time. The generator is available at https://github.com/petecoop/generator-express and provides a ready-to-use app. Altough I prefer node scripts for tasks-related stuff, the generator came with gulp, but since there were few tasks it was ok. I cleaned up some additional boilerplate that comes with generator, like routes and views, which I wasn't going to use.
 
 For the realtime functionality, I installed the socket.io dependency, and made a basic list of the events I was going to support:
 - a user logs in, and other users are notified
 - a user scrolls in a document, and other users are notified
 - a user logs out, and other users are notified
 
-For the frontend part, I picked up a bBostrap starter template from [Bootstrap](https://getbootstrap.com)'s site, and applied styles from the [Readable](https://bootswatch.com/readable/) Bootswatch template.
+For the frontend part, I picked up a starter HTML template from [Bootstrap](https://getbootstrap.com)'s site, and applied styles from the [Readable](https://bootswatch.com/readable/) Bootswatch template.
 
 I chose React as the frontend framework, and picked up https://github.com/vasanthk/react-es6-webpack-boilerplate as the starting boilerplate. It came with Webpack (both for dev and production usage) and hot reloading. There was another decent boilerplate available at https://github.com/srn/react-webpack-boilerplate, but it includes SASS and its dependencies. Since I was going to use a few CSS styles, I decided to go for the lighter option.
 
@@ -64,9 +64,9 @@ App
 --- --- --- DocContent
 ```
 
-With this structure, I created a basic authentication flow (without server integration): when a user logged in, the document view had to be shown; when a user clicked on logout, the login view had to be shown again. If the uses refreshed the page, its state should be kept. This was achieved by the use of a cookie that is stored in the browser when the user logs in, and removed when the user decides to log out.
+With this structure, I created a basic authentication flow (without server integration): when a user logged in, the document view had to be shown; when a user clicked on logout, the login view had to be shown again. If the uses refreshed the page, its state should be kept. This was achieved by the use of a cookie is stored in the browser when the user logs in, and removed when the user decides to log out.
 
-On the other side, for the backend authentication, I controlled it at first by inspecting the ```id``` property of a socket, but later changed it to a cookie authentication scheme, which results in a more flexible approach (e.g. in the future it could allow a same user to have more than one tab open at a time, if the server restarted the user session would not be lost, etc.). Cookie data may be accesed in the backend by inspecting the ```socket.request.headers``` property. The cookie name, along with its path, can be configured in ```common/cookieConfig```, which prevents hardcoding and duplication on both sides of the app.
+On the other side, for the backend authentication, I managed it at first by inspecting the ```id``` property of a socket, but later changed it to a cookie authentication scheme, which results in a more flexible approach (e.g. in the future it could allow a same user to have more than one tab open at a time, if the server went down or restarted the user session could be conserved, etc.). Cookie data may be accesed in the backend by inspecting the ```socket.request.headers``` property. The cookie name, along with its path, can be configured in ```common/cookieConfig.js```, which prevents hardcoding and duplication on both sides of the app.
 In the backend, I refactored the user identification via cookie as socket.io middlewares that:
 - Inspect the ```socket.request.headers.cookie``` property, and if a cookie header is found, parse it using the ```cookie``` library
 - Throw an authentication error when a the user cookie is not found
@@ -99,9 +99,9 @@ io.use(function(socket, next) {
 
 <br/>
 
-For the scroll position update flow I decided to store the current position in memory for the sake of simplicity and since there would be a single instance of the app. For a more complex solution, it could be stored in a mongodb or redis database. When a user logs in, the current position is received as well.
+For the scroll position update flow I decided to store the current position in memory for the sake of simplicity and since there would be a single instance of the app. For a more complex solution, it could be stored in a persistent or in-memory database. When a user logs in, the current position is sent as well.
 
-To prevent a constant updating of the scroll position while a user is still scrolling (since the ```scroll``` event is triggered more than once), I added a debounce on top of to the listener function. This meant: if a user stops scrolling, it will wait a certain amount of time to trigger the update function; if during that time the user scrolls again, that timer is reset. I extracted the debounce code from https://remysharp.com/2010/07/21/throttling-function-calls and later modified it. After trying different delays, decided that 300ms would be an acceptable value for a good user experience. Nevertheless, this value can be configured by editing the property ```readingDebounceDelay``` in ```frontend/app_config```.
+To prevent a constant updating of the scroll position while a user is still scrolling (since the ```scroll``` event is triggered more than once), I added a debounce on top of to the listener function. This meant: if a user stops scrolling, it will wait a certain amount of time to trigger the update function; if during that time the user scrolls again, that timer is reset. I extracted the debounce code from https://remysharp.com/2010/07/21/throttling-function-calls and later modified it. After trying different delays, decided that 300ms would be an acceptable value for a good user experience. Nevertheless, this value can be configured by editing the property ```readingDebounceDelay``` in ```frontend/appConfig.js```.
 
 Example of usage of the debounce function:
 ```javascript
@@ -137,18 +137,18 @@ window.addEventListener('scroll', debounce(this.handleScroll, appConfig.readingD
 
 As a nice-to-have feature, I decided to add a list of the current logged in users in the app navbar. I added support for handling the current list of logged in users, both in the backend and frontend, which needs to be updated when either a user logs in or out.
 
-Regarding the app structure, at first I had the ```frontend``` dir included in the ```backend``` dir. I decided to pull the ```frontend``` out in order to have a better separation of concerns (which also permits organize them in independent repositories). I also realized that I was duplicating data on both sides (like event names or the user cookie name), so I moved this kind of data to a root ```common``` folder, from where I could reference and make use in the backend or frontend indistinctly.
+Regarding the app layout structure, at first I had the ```frontend``` dir included in the ```backend``` dir. I decided to pull the ```frontend``` out in order to have a better separation of concerns (which also permits organizing them in independent repositories). I also realized that I was duplicating data on both sides (like event names or the user cookie name), so I moved this kind of shared data to a common folder, from where I could reference and make use in the backend or frontend indistinctly.
 
-The app supports only a single document at a time. Though, a different document can be configured by saving an HTML file in ```frontend/docs``` and referencing it by editing the ```documentName``` config in ```frontend/app_config.json```.
+The app supports only a single document at a time. Though, a different document can be configured by saving an HTML file in the ```frontend/docs``` dir and referencing it by editing the ```documentName``` config in ```frontend/appConfig.js```.
 
-Example:
+Example of configuring a new document:
 ```html
 <!-- frontend/docs/new_document.html -->
 <p>I am a new document for DocSync</p>
 ```
 
 ```javascript
-// frontend/appConfig.json
+// frontend/appConfig.js
 var config = {
   // ...
   documentName: 'new_document'
@@ -160,13 +160,12 @@ var config = {
 ***
 <br/>
 
-
 ### Bonus point #1
 
 > How would you keep versioning on the database, if we wanted to store the last read position on each document (i.e. pick we're you've left)?
 
 In order to store the last read position on each document I would make use of any persistent storage system in the backend like MySql or MongoDB (taking into account the nature of the application -either relational or more unstructured- when deciding which one to pick).
-If performance matters, I would setup an in-memory database like Redis or Memcached between the server and the persistent storage, which is faster that a only-persistent solution. The server would then look up the last position first in the in-memory storage, and if not found, consult the persistent storage for it (and consequently updating the in-memory storage with the just read value).
+If performance matters, I would setup an in-memory database like Redis or Memcached between the server and the persistent storage, which is faster than a only-persistent solution. The server would then look up the last position firstly in the in-memory storage, and if not found, consult the persistent storage for it (and consequently updating the in-memory storage with the just read value).
 
 
 ### Bonus point #2
@@ -180,7 +179,7 @@ An example of enabling Sticky Sessions in Nginx lies below, which routes clients
 
 ```nginx
 upstream io_servers {
-  ip_hash; // This instruction indicates the connections will be sticky
+  ip_hash; # This instruction indicates that the connections will be sticky
   server 127.0.0.1:10001;
   server 127.0.0.1:10002;
   ...

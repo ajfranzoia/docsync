@@ -49,4 +49,8 @@ export default function Navbar(props) {
 	);
 }
 
-
+Navbar.propTypes = {
+  username: PropTypes.string.isRequired,
+  users: PropTypes.array.isRequired,
+  doLogout: PropTypes.func.isRequired
+};

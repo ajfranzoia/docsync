@@ -13,17 +13,27 @@ The application has been separated in  ```backend```, ```frontend``` and ```comm
 
 ## Installation and setup
 
-### For development (gulp + webpack)
+### Requirements
+
+* Node 6 or later
+* Git
+* Docker (for production usage)
+
+### For development
 
 ```bash
 # Clone project
 git clone https://github.com/ajfranzoia/docsync
 
-# Run backend server in dev mode
-cd backend && gulp develop
+# Launch backend server in dev mode (gulp + nodemon + livereload)
+# in docsync/backend:
+npm install
+npm run develop
 
-# Run frontend app in dev mode (usually in another terminal)
-cd frontend && npm start
+# Launch frontend app in dev mode (webpack + hot module replacement)
+# in docsync/frontend:
+npm install
+npm start
 ```
 
 ### For production (provided as a Docker image)
@@ -42,7 +52,7 @@ docker run -p 3000:3000 docsync
 
 ## Architecture and development decisions
 
-I decided to use Express.js for the backend. I initialized the app by using a Yeoman generator that gave me the starting boilerplate in almost no time. The generator is available at https://github.com/petecoop/generator-express and provides a ready-to-use app. Altough I prefer node scripts for tasks-related stuff, the generator came with gulp, but since there were few tasks it was ok. I cleaned up some additional boilerplate that comes with generator, like routes and views, which I wasn't going to use.
+I decided to use Express.js for the backend. I initialized the app by using a Yeoman generator that gave me the starting boilerplate in almost no time. The generator is available at https://github.com/petecoop/generator-express and provides a ready-to-use app, with nodemon and liveload for development. Altough I prefer node scripts for tasks-related stuff, the generator came with gulp, but since there were few tasks it was ok. I cleaned up some additional boilerplate that comes with generator, like routes and views, which I wasn't going to use.
 
 For the realtime functionality, I installed the socket.io dependency, and made a basic list of the events I was going to support:
 - a user logs in, and other users are notified

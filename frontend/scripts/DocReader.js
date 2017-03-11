@@ -1,7 +1,7 @@
 import React, { Component, PropTypes } from 'react';
 import debounce from './utils/debounce';
 import DocContent from './DocContent';
-import appConfig from 'app_config';
+import appConfig from 'appConfig';
 
 export default class DocReader extends Component {
 

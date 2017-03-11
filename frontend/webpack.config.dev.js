@@ -46,7 +46,7 @@
 
 const webpack = require('webpack');
 const path = require('path');
-const config = require('./app_config');
+const config = require('./appConfig');
 
 module.exports = {
   entry: [
@@ -64,7 +64,7 @@ module.exports = {
     extensions: ['', '.js'],
     alias: {
       common: '../../common',
-      app_config: '../app_config',
+      appConfig: '../appConfig',
       document: '../static/docs/' + config.documentName + '.html'
     },
   },

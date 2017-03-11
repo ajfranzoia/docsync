@@ -6,7 +6,7 @@ import DocReader from './DocReader';
 import LoginForm from './LoginForm';
 import LoadingApp from './LoadingApp';
 import Error from './Error';
-import appConfig from 'app_config';
+import appConfig from 'appConfig';
 import events from 'common/events';
 import cookieConfig from 'common/cookieConfig';
 import errorCodes from 'common/errorCodes';

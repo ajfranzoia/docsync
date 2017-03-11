@@ -148,7 +148,7 @@ Example:
 ```
 
 ```javascript
-// frontend/app_config.json
+// frontend/appConfig.json
 var config = {
   // ...
   documentName: 'new_document'

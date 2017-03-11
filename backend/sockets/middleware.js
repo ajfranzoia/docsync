@@ -8,6 +8,7 @@ function setupMiddlewares(io) {
   io.use(function(socket, next) {
     var cookieHeader = socket.request.headers.cookie;
 
+    // If header is not empty, parse it using the cookie library
     if (cookieHeader) {
       socket.cookies = cookie.parse(cookieHeader);
     }

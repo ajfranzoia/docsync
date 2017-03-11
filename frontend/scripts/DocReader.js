@@ -17,6 +17,7 @@ export default class DocReader extends Component {
 
 	componentDidMount() {
     window.addEventListener('scroll', debounce(this.handleScroll, appConfig.readingDebounceDelay, () => {
+      // Don't call the handleScroll function if a position update is ongoing
       return !this.props.isUpdatingPosition;
     }));
 	}

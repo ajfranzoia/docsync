@@ -173,3 +173,58 @@ If performance matters, I would setup an in-memory database like Redis or Memcac
 
 > How would you run this same app on multiple servers behind a Load Balancer?
 
+In order to run the app using multiple servers behind a Load Balancer, the requests associated with a particular session id must connect to the process that originated them, due to the nature of the handshake and upgrade protocol of WebSockets. Furthermore, some clients might be using long-polling, instead of and active bi-directional communication channel where it can be written to immediately.
+To solve this problem we can resort to the use of "Sticky Sessions", where the Load Balancer is responsible for ensuring that requests that come from a certain client are always routed to the same server.
+
+An example of enabling Sticky Sessions in Nginx lies below, which routes clients based on their originating address:
+
+```nginx
+upstream io_servers {
+  ip_hash; // This instruction indicates the connections will be sticky
+  server 127.0.0.1:10001;
+  server 127.0.0.1:10002;
+  ...
+}
+```
+
+Additionaly, the server must point to this upstream and the required ```Upgrade``` headers must be passed along.
+
+Once the routing issue is resolved, sending events to clients that may be talking to different servers requires an approach that allows broadcasting events to everyone, even if the original message came from a different node.
+This can be achieved by including a messaging layer with publish/subscribe capabilities like RabbitMQ, ZeroMQ or Redis.
+
+The following example uses Redis and the ```socket.io-redis``` adapter in order to publish and subscribe events through Redis:
+
+```javascript
+//...
+
+const redis = require('socket.io-redis');
+const io = require('socket.io')(server);
+
+// Setup redis adapter for socket.io
+io.adapter(redis({
+  host: redisHost,
+  port: redisPort
+}));
+
+io.on('connection', (socket) => {
+
+  // Message will be published to all the nodes through the Redis adapter
+  socket.on('message-to-all', (data) => {
+    io.emit('message-to-all', data);
+  });
+
+  //...
+});
+
+```
+
+
+
+
+
+
+
+
+
+
+

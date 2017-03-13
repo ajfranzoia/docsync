@@ -69,7 +69,7 @@ function init(server) {
 
     // Disconnect event from a client
     socket.on('disconnect', function() {
-      if (socket._user) {
+      if (socket._user && users[socket._user]) {
         disconnectUser(socket);
       }
     });

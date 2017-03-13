@@ -9,7 +9,7 @@ DocSync is a very simple real-time web app that allows users to read a document 
 
 ## Basic structure and frameworks used
 
-The application has been separated in  ```backend```, ```frontend``` and ```common``` folders. The backend is built with Express.js and Socket.IO. The frontend is built with React and Webpack. The ```common``` dir includes data that is reused by both sides (e.g. events constants, user cookie config, etc.).
+The application has been separated in  ```backend```, ```frontend``` and ```common``` folders. The backend is built with Express.js and Socket.IO. The frontend is built with React and Webpack. The common dir includes data that is reused by both sides (e.g. events constants, user cookie config, etc.).
 
 ## Installation and setup
 
@@ -41,18 +41,19 @@ npm start
 ```bash
 # Clone project
 git clone https://github.com/ajfranzoia/docsync
+cd docsync
 
 # Build docker image
 docker build . -t docsync
 
 # Run container with built image
-docker run -p 3000:3000 docsync
+docker run -p 3000:3000 --rm docsync
 ```
 
 
 ## Architecture and development decisions
 
-I decided to use Express.js for the backend. I initialized the app by using a Yeoman generator that gave me the starting boilerplate in almost no time. The generator is available at https://github.com/petecoop/generator-express and provides a ready-to-use app, with nodemon and liveload for development. Altough I prefer node scripts for tasks-related stuff, the generator came with gulp, but since there were few tasks it was ok. I cleaned up some additional boilerplate that comes with generator, like routes and views, which I wasn't going to use.
+I decided to use Express.js for the backend and initialized the app by using a Yeoman generator that gave me the starting boilerplate in almost no time. The generator is available at https://github.com/petecoop/generator-express and provides a ready-to-use app, with nodemon and liveload for development. Even tough I prefer node scripts for task-related stuff, the generator came with gulp, but since there were few of them it was acceptable. I cleaned up some additional boilerplate that comes with generator which I wasn't going to use, like routes and views.
 
 For the realtime functionality, I installed the socket.io dependency, and made a basic list of the events I was going to support:
 - a user logs in, and other users are notified
@@ -74,12 +75,12 @@ App
 --- --- --- DocContent
 ```
 
-With this structure, I created a basic authentication flow (without server integration): when a user logged in, the document view had to be shown; when a user clicked on logout, the login view had to be shown again. If the uses refreshed the page, its state should be kept. This was achieved by the use of a cookie is stored in the browser when the user logs in, and removed when the user decides to log out.
+With this structure, I created a basic authentication flow (without server integration): when a user logged in, the document view had to be shown; when a user clicked on logout, the login view had to be shown again. If the user refreshed the page, its state should be kept. This was achieved by the use of a cookie is stored in the browser when the user logs in, and removed when the user decides to log out.
 
 On the other side, for the backend authentication, I managed it at first by inspecting the ```id``` property of a socket, but later changed it to a cookie authentication scheme, which results in a more flexible approach (e.g. in the future it could allow a same user to have more than one tab open at a time, if the server went down or restarted the user session could be conserved, etc.). Cookie data may be accesed in the backend by inspecting the ```socket.request.headers``` property. The cookie name, along with its path, can be configured in ```common/cookieConfig.js```, which prevents hardcoding and duplication on both sides of the app.
 In the backend, I refactored the user identification via cookie as socket.io middlewares that:
 - Inspect the ```socket.request.headers.cookie``` property, and if a cookie header is found, parse it using the ```cookie``` library
-- Throw an authentication error when a the user cookie is not found
+- Throw an authentication error when the user cookie is not found
 - Assign the current user as a property of the socket object when identified
 
 ```javascript
@@ -111,7 +112,7 @@ io.use(function(socket, next) {
 
 For the scroll position update flow I decided to store the current position in memory for the sake of simplicity and since there would be a single instance of the app. For a more complex solution, it could be stored in a persistent or in-memory database. When a user logs in, the current position is sent as well.
 
-To prevent a constant updating of the scroll position while a user is still scrolling (since the ```scroll``` event is triggered more than once), I added a debounce on top of to the listener function. This meant: if a user stops scrolling, it will wait a certain amount of time to trigger the update function; if during that time the user scrolls again, that timer is reset. I extracted the debounce code from https://remysharp.com/2010/07/21/throttling-function-calls and later modified it. After trying different delays, decided that 300ms would be an acceptable value for a good user experience. Nevertheless, this value can be configured by editing the property ```readingDebounceDelay``` in ```frontend/appConfig.js```.
+To prevent a constant update of the scroll position while a user is still scrolling (since the ```scroll``` event is triggered more than once), I added a debounce on top of to the listener function. This meant: if a user stops scrolling, it will wait a certain amount of time to trigger the update function; if during that time the user scrolls again, that timer is reset. I extracted the debounce code from https://remysharp.com/2010/07/21/throttling-function-calls and later modified it. After trying different delays, considered that 300ms would be an acceptable value for a good user experience. Nevertheless, this value can be configured by editing the property ```readingDebounceDelay``` in ```frontend/appConfig.js```.
 
 Example of usage of the debounce function:
 ```javascript
@@ -149,7 +150,7 @@ As a nice-to-have feature, I decided to add a list of the current logged in user
 
 Regarding the app layout structure, at first I had the ```frontend``` dir included in the ```backend``` dir. I decided to pull the ```frontend``` out in order to have a better separation of concerns (which also permits organizing them in independent repositories). I also realized that I was duplicating data on both sides (like event names or the user cookie name), so I moved this kind of shared data to a common folder, from where I could reference and make use in the backend or frontend indistinctly.
 
-The app supports only a single document at a time. Though, a different document can be configured by saving an HTML file in the ```frontend/docs``` dir and referencing it by editing the ```documentName``` config in ```frontend/appConfig.js```.
+The app supports reading a single document at a time. Though, a different document can be configured by saving an HTML file in the ```frontend/docs``` dir and referencing it by editing the ```documentName``` config in ```frontend/appConfig.js```.
 
 Example of configuring a new document:
 ```html
@@ -174,8 +175,8 @@ var config = {
 
 > How would you keep versioning on the database, if we wanted to store the last read position on each document (i.e. pick we're you've left)?
 
-In order to store the last read position on each document I would make use of any persistent storage system in the backend like MySql or MongoDB (taking into account the nature of the application -either relational or more unstructured- when deciding which one to pick).
-If performance matters, I would setup an in-memory database like Redis or Memcached between the server and the persistent storage, which is faster than a only-persistent solution. The server would then look up the last position firstly in the in-memory storage, and if not found, consult the persistent storage for it (and consequently updating the in-memory storage with the just read value).
+In order to store the last read position on a document I would make use of any persistent storage system in the backend like MySql or MongoDB (taking into account the nature of the application -either relational or more unstructured- when deciding which one to pick).
+If performance matters, I would setup an in-memory database like Redis or Memcached between the server and the persistent storage, which is faster than a only-persistent solution. The server would then look up the last position firstly in the in-memory storage, and if not found, consult the persistent storage for it (and consequently updating the in-memory storage with the value just read).
 
 
 ### Bonus point #2
@@ -183,13 +184,13 @@ If performance matters, I would setup an in-memory database like Redis or Memcac
 > How would you run this same app on multiple servers behind a Load Balancer?
 
 In order to run the app using multiple servers behind a Load Balancer, the requests associated with a particular session id must connect to the process that originated them, due to the nature of the handshake and upgrade protocol of WebSockets. Furthermore, some clients might be using long-polling, instead of and active bi-directional communication channel where it can be written to immediately.
-To solve this problem we can resort to the use of "Sticky Sessions", where the Load Balancer is responsible for ensuring that requests that come from a certain client are always routed to the same server.
+To solve this problem, "Sticky Sessions" may be used, where the Load Balancer is responsible for ensuring that requests that come from a certain client are always routed to the same server.
 
 An example of enabling Sticky Sessions in Nginx lies below, which routes clients based on their originating address:
 
 ```nginx
 upstream io_servers {
-  ip_hash; # This instruction indicates that the connections will be sticky
+  ip_hash; # client's IP address is used as a hashing key to select the server
   server 127.0.0.1:10001;
   server 127.0.0.1:10002;
   ...
@@ -198,7 +199,7 @@ upstream io_servers {
 
 Additionaly, the server must point to this upstream and the required ```Upgrade``` headers must be passed along.
 
-Once the routing issue is resolved, sending events to clients that may be talking to different servers requires an approach that allows broadcasting events to everyone, even if the original message came from a different node.
+Once the routing issue is resolved, sending events to clients that may be talking to different servers requires an approach that allows broadcasting them to everyone, even if the original message came from a different node.
 This can be achieved by including a messaging layer with publish/subscribe capabilities like RabbitMQ, ZeroMQ or Redis.
 
 The following example uses Redis and the ```socket.io-redis``` adapter in order to publish and subscribe events through Redis:
